@@ -1,0 +1,12 @@
+# workdirs
+node_modules
+
+dist
+config.json
+
+
+goldapple*.json
+
+# Local ENV
+.env
+other_os
