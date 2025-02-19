@@ -11,7 +11,7 @@ const ALLOWED_USERS = config.allowedUsers;
 
 function isNotAllowed(data: { from?: { id: number } }): boolean {
   const isNotValid = !data.from?.id || !ALLOWED_USERS.includes(data.from.id);
-  if (!isNotValid) {
+  if (isNotValid) {
     console.error(`Пользователя ${data.from?.id} нет в списке`);
   }
   return isNotValid;
