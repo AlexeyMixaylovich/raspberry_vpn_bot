@@ -23,7 +23,7 @@ export const execPromise = (command: string):Promise<TExecPromiseRes> => new Pro
     console.log(`✅ Успех: ${command}`);
     return resolve({
       status: 'success',
-      data: stderr,
+      data: stdout,
     });
   });
 });
