@@ -10,11 +10,11 @@ const VPN_CONFIG_DIR = config.vpnConfigDir;
 const ALLOWED_USERS = config.allowedUsers;
 
 function isNotAllowed(data: { from?: { id: number } }): boolean {
-  const isValid = !data.from?.id || !ALLOWED_USERS.includes(data.from.id);
-  if (!isValid) {
+  const isNotValid = !data.from?.id || !ALLOWED_USERS.includes(data.from.id);
+  if (!isNotValid) {
     console.error(`Пользователя ${data.from?.id} нет в списке`);
   }
-  return isValid;
+  return isNotValid;
 }
 
 const getConfigs = () => getFilesInDirectory(VPN_CONFIG_DIR);
