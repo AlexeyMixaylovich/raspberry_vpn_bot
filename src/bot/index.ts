@@ -2,6 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { getFilesInDirectory, getOpenVPNConfig } from '../helpers';
 import { config } from '../config';
+import { restartOpenVPNWithConfig } from '../helpers/restartOpenVPNWithConfig';
 
 // 🔑 Укажите ваш Telegram токен
 const TOKEN = config.telegramBotToken;
@@ -9,8 +10,14 @@ const VPN_CONFIG_DIR = config.vpnConfigDir;
 const ALLOWED_USERS = config.allowedUsers;
 
 function isNotAllowed(data: { from?: { id: number } }): boolean {
-  return !data.from?.id || !ALLOWED_USERS.includes(data.from.id);
+  const isValid = !data.from?.id || !ALLOWED_USERS.includes(data.from.id);
+  if (!isValid) {
+    console.error(`Пользователя ${data.from?.id} нет в списке`);
+  }
+  return isValid;
 }
+
+const getConfigs = () => getFilesInDirectory(VPN_CONFIG_DIR);
 
 export const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -31,7 +38,7 @@ bot.onText(/\/available_configs/, async (msg) => {
     return;
   }
   const chatId = msg.chat.id;
-  const configs = await getFilesInDirectory(VPN_CONFIG_DIR);
+  const configs = await getConfigs();
 
   if (configs.length === 0) {
     bot.sendMessage(chatId, '❌ Нет доступных конфигов.');
@@ -50,6 +57,16 @@ bot.onText(/\/available_configs/, async (msg) => {
   });
 });
 
+const setConfig = async (configName:string) => {
+  const configs = await getConfigs();
+  const findConfig = configs.find(({ name }) => configName === name);
+  if (!findConfig) {
+    console.error(`Конфиг :${configName} не найден`);
+    return false;
+  }
+
+  return restartOpenVPNWithConfig(findConfig.fullPath);
+};
 bot.on('callback_query', async (query) => {
   if (isNotAllowed(query)) {
     return;
@@ -60,8 +77,8 @@ bot.on('callback_query', async (query) => {
   if (query.data.startsWith('set_config:')) {
     const configName = query.data.split(':')[1];
 
-    // Здесь можно вызвать `setConfig(configName)` (пока оставил true для теста)
-    const success = true;
+    const success = await setConfig(configName);
+
     const resText = success ? '✅ Конфиг установлен!' : '❌ Ошибка установки.';
     bot.answerCallbackQuery(query.id, { text: resText });
     const text = success
