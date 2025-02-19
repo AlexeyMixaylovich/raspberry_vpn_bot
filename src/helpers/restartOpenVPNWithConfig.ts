@@ -23,11 +23,13 @@ export async function restartOpenVPNWithConfig(newConfigPath: string): Promise<b
   }
   const updatedServiceFile = file.replace(/(--config\s+")(.*?)(")/, `$1${newConfigPath}$3`);
 
-  const updatedFile = await fs.writeFile(serviceFilePath, updatedServiceFile, 'utf8').catch((writeErr) => {
-    console.error(`❌ Ошибка записи systemd-файла: ${writeErr.message}`);
-    return undefined;
-  });
-  if (updatedFile === undefined) {
+  const updatedFile = await fs.writeFile(serviceFilePath, updatedServiceFile, 'utf8')
+    .then(() => 'success')
+    .catch((writeErr) => {
+      console.error(`❌ Ошибка записи systemd-файла: ${writeErr.message}`);
+      return 'error';
+    });
+  if (updatedFile === 'error') {
     return false;
   }
   const { status } = await execPromise('sudo systemctl daemon-reload && sudo systemctl restart openvpn-autostart.service');
